@@ -23,6 +23,8 @@ public class DbStructCompare {
     // 同步脚本文件
     private static final File DDL_FILE = new File("./patch-ddl.sql");
 
+    private static final Map<String, String> tableDdlMap = new HashMap<>();
+
     public static void main(String[] args) throws IOException {
         Properties properties = new Properties();
         InputStream input = DbStructCompare.class.getClassLoader().getResourceAsStream("compare.properties");
@@ -56,8 +58,8 @@ public class DbStructCompare {
         write2file("-- need create table ---------------------------------------- ");
         sourceTableStruct.keySet().forEach(tableName -> {
             if (!targetTableStruct.containsKey(tableName)) {
-                String createDdlSql = "show create table `" + dbSource.getDbname() + "`." + tableName;
-                String createTableDdl = DbUtils.showCreateDdl(createDdlSql);
+                String createTableDdl = getTableDdl(tableName, dbSource);
+                createTableDdl += ";";
                 write2file(createTableDdl);
             }
         });
@@ -65,10 +67,6 @@ public class DbStructCompare {
         write2file("-- need modify table ---------------------------------------- ");
         sourceTableStruct.forEach((tableName, struct) -> {
             if (targetTableStruct.containsKey(tableName)) {
-
-                String createDdlSql = "show create table `" + dbSource.getDbname() + "`." + tableName;
-                String tableDdl = DbUtils.showCreateDdl(createDdlSql);
-                String[] tableDdlLines = tableDdl.split("\n");
 
                 List<DBColumn> targetStruct = targetTableStruct.get(tableName);
                 // need remove columns
@@ -84,7 +82,7 @@ public class DbStructCompare {
                 for (DBColumn dbColumn : struct) {
                     boolean b = targetStruct.stream().anyMatch(it -> it.getCOLUMN_NAME().equals(dbColumn.getCOLUMN_NAME()));
                     if (!b) {
-                        genColumDdl(dbColumn, tableDdlLines, tableName, struct, "ADD");
+                        genColumDdl(dbColumn, getTableDdlLines(tableName, dbSource), tableName, struct, "ADD");
                     }
                 }
                 // need update columns
@@ -96,12 +94,27 @@ public class DbStructCompare {
                                         || compareNoPass(targetColumn.getCOLUMN_DEFAULT(), dbColumn.getCOLUMN_DEFAULT())
                                         || compareNoPass(targetColumn.getCOLUMN_COMMENT(), dbColumn.getCOLUMN_COMMENT())
                                 ) {
-                                    genColumDdl(dbColumn, tableDdlLines, tableName, struct, "MODIFY");
+                                    genColumDdl(dbColumn, getTableDdlLines(tableName, dbSource), tableName, struct, "MODIFY");
                                 }
                             });
                 }
             }
         });
+    }
+
+    private static String[] getTableDdlLines(String tableName, DbConfig dbSource) {
+        String tableDdl = getTableDdl(tableName, dbSource);
+        return tableDdl.split("\n");
+    }
+
+    private static String getTableDdl(String tableName, DbConfig dbSource) {
+        String tableDdl = tableDdlMap.get(tableName);
+        if (tableDdl == null) {
+            String createDdlSql = "show create table `" + dbSource.getDbname() + "`." + tableName;
+            tableDdl = DbUtils.showCreateDdl(createDdlSql);
+            tableDdlMap.put(tableName, tableDdl);
+        }
+        return tableDdl;
     }
 
     private static DbConfig getDbConfig(Properties properties, int i) {
@@ -142,9 +155,7 @@ public class DbStructCompare {
         DbUtils.initDbUtil(dbConfig);
         // 获取所有表
         List<String> dbTables = DbUtils.listAllTables("Tables_in_" + dbConfig.getDbname());
-        dbTables = dbTables.stream()
-                .filter(it -> !it.endsWith(EXECUTIONS_END))
-                .collect(Collectors.toList());
+        dbTables = dbTables.stream().filter(it -> !it.endsWith(EXECUTIONS_END)).collect(Collectors.toList());
         Map<String, List<DBColumn>> tableStruct = new HashMap<>();
         for (String tableName : dbTables) {
             List<DBColumn> dbColumns = listTableColum(dbConfig, tableName);
