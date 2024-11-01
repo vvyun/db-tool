@@ -22,12 +22,14 @@ public class DbStructCompare {
     private static final String EXECUTIONS_END = "_history";
     // 同步脚本文件
     private static final File DDL_FILE = new File("./patch-ddl.sql");
+    // 配置名
+    private static final String CONFIG_NAME = "compare.properties";
 
     private static final Map<String, String> tableDdlMap = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
         Properties properties = new Properties();
-        InputStream input = DbStructCompare.class.getClassLoader().getResourceAsStream("compare.properties");
+        InputStream input = DbStructCompare.class.getClassLoader().getResourceAsStream(CONFIG_NAME);
         properties.load(input);
         properties.list(System.out);
         // 数据库（原）

@@ -7,9 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 @Slf4j
 public class DbUtils {
@@ -139,6 +137,51 @@ public class DbUtils {
             close(preparedStatement, connection);
         }
         return list;
+    }
+
+    @SneakyThrows
+    public static List<Map<String, Object>> listData(String sql) {
+        List<Map<String, Object>> list = new ArrayList<>();
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet;
+        try {
+            connection = DbUtils.getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            resultSet = preparedStatement.executeQuery();
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+            while (resultSet.next()) {
+                Map<String, Object> map = new HashMap<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    map.put(metaData.getColumnName(i), resultSet.getObject(i));
+                }
+                list.add(map);
+            }
+        } finally {
+            //关闭连接
+            close(preparedStatement, connection);
+        }
+        return list;
+    }
+
+    @SneakyThrows
+    public static long countData(String sql) {
+        Connection connection = null;
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet;
+        try {
+            connection = DbUtils.getConnection();
+            preparedStatement = connection.prepareStatement(sql);
+            resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()) {
+                return resultSet.getLong(1);
+            }
+        } finally {
+            //关闭连接
+            close(preparedStatement, connection);
+        }
+        return 0L;
     }
 
     @SneakyThrows
