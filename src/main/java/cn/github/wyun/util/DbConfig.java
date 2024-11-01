@@ -11,4 +11,5 @@ public class DbConfig {
     private String username;
     private String password;
     private String url;
+    private String dbname;
 }

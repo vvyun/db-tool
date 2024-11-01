@@ -1,6 +1,8 @@
 package cn.github.wyun.util;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -9,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 public class DbUtils {
 
     private DbUtils() {
@@ -71,6 +74,7 @@ public class DbUtils {
      * @param columnType 列类型
      * @return list
      */
+    @SneakyThrows
     public static <T> List<T> listColumn(String sql, String columnName, Class<T> columnType) {
         List<T> list = new ArrayList<>();
         Connection connection = null;
@@ -84,8 +88,6 @@ public class DbUtils {
                 //获取keyID
                 list.add(resultSet.getObject(columnName, columnType));
             }
-        } catch (Exception e) {
-            throw new RuntimeException();
         } finally {
             //关闭连接
             close(preparedStatement, connection);
@@ -100,6 +102,7 @@ public class DbUtils {
      * @param type 返回类
      * @return list
      */
+    @SneakyThrows
     public static <T> List<T> list(String sql, Class<T> type) {
         List<T> list = new ArrayList<>();
         Connection connection = null;
@@ -131,8 +134,6 @@ public class DbUtils {
                 }
                 list.add(newInstance);
             }
-        } catch (Exception e) {
-            throw new RuntimeException();
         } finally {
             //关闭连接
             close(preparedStatement, connection);
@@ -140,6 +141,7 @@ public class DbUtils {
         return list;
     }
 
+    @SneakyThrows
     public static List<String> listAllDbName() {
         List<String> list = new ArrayList<>();
         Connection connection = null;
@@ -152,8 +154,6 @@ public class DbUtils {
             while (resultSet.next()) {
                 list.add(resultSet.getString("database"));
             }
-        } catch (Exception e) {
-            throw new RuntimeException();
         } finally {
             //关闭连接
             close(preparedStatement, connection);
@@ -161,7 +161,7 @@ public class DbUtils {
         return list;
     }
 
-
+    @SneakyThrows
     public static List<String> listAllTables(String clName) {
         List<String> list = new ArrayList<>();
         Connection connection = null;
@@ -174,8 +174,6 @@ public class DbUtils {
             while (resultSet.next()) {
                 list.add(resultSet.getString(clName));
             }
-        } catch (Exception e) {
-            throw new RuntimeException();
         } finally {
             //关闭连接
             close(preparedStatement, connection);
@@ -183,6 +181,7 @@ public class DbUtils {
         return list;
     }
 
+    @SneakyThrows
     public static String showCreateDdl(String sql) {
         List<String> list = new ArrayList<>();
         Connection connection = null;
@@ -195,8 +194,6 @@ public class DbUtils {
             while (resultSet.next()) {
                 list.add(resultSet.getString("Create Table"));
             }
-        } catch (Exception e) {
-            throw new RuntimeException();
         } finally {
             //关闭连接
             close(preparedStatement, connection);
@@ -207,26 +204,20 @@ public class DbUtils {
     /**
      * 获取数据库链接
      */
+    @SneakyThrows
     private static Connection getConnection() {
-        Connection connection;
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection(url, username, password);
-        } catch (Exception e) {
-            throw new RuntimeException();
-        }
-        return connection;
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        return DriverManager.getConnection(url, username, password);
     }
 
     /**
      * 关闭连接
      */
+    @SneakyThrows
     private static void close(PreparedStatement preparedStatement, Connection con) {
         if (null != preparedStatement) {
             try {
                 preparedStatement.close();
-            } catch (SQLException e) {
-                throw new RuntimeException();
             } finally {
                 if (null != con) {
                     try {
