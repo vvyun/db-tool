@@ -2,14 +2,12 @@ package cn.github.wyun.util;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.*;
 
-@Slf4j
 public class DbUtils {
 
     private DbUtils() {
